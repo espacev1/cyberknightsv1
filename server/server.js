@@ -23,7 +23,15 @@ app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        env: {
+            supabase_url: !!process.env.SUPABASE_URL,
+            supabase_key: !!process.env.SUPABASE_SERVICE_KEY,
+            node_env: process.env.NODE_ENV
+        }
+    });
 });
 
 // Error handling
