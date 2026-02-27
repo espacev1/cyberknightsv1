@@ -21,7 +21,7 @@ const FileUploader = ({ onFileSelect, disabled, error }) => {
             'application/zip': ['.apk']
         },
         maxFiles: 1,
-        maxSize: 50 * 1024 * 1024,
+        maxSize: 120 * 1024 * 1024,
         disabled
     });
 
@@ -55,7 +55,7 @@ const FileUploader = ({ onFileSelect, disabled, error }) => {
                 </div>
                 <div className="upload-constraints">
                     <span>📦 .apk files only</span>
-                    <span>📏 Maximum 50 MB</span>
+                    <span>📏 Maximum 120 MB</span>
                 </div>
             </div>
             {error && (

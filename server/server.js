@@ -31,7 +31,7 @@ app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
 
     if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'File too large. Maximum size is 50MB.' });
+        return res.status(413).json({ error: 'File too large. Maximum size is 120MB.' });
     }
 
     if (err.message === 'Only .apk files are allowed') {
