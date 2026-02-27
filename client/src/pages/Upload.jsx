@@ -49,7 +49,8 @@ const Upload = () => {
             }, 1000);
         } catch (err) {
             console.error('[SCAN] Analysis failure:', err);
-            setError(`Analysis failure: ${err.message}`);
+            const backendError = err.response?.data?.error || err.response?.data?.details || err.message;
+            setError(`Analysis failure: ${backendError}`);
             setPhase('idle');
             setUploading(false);
         }

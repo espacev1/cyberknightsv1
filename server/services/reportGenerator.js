@@ -44,13 +44,13 @@ async function generateReport(userId, fileName, fileSize, analysisResults) {
 
         if (error) {
             console.error('Failed to store report in Supabase:', error);
-            return { ...report, report_id: uuidv4(), stored: false };
+            return { error: error.message || 'Database insert failed', details: error };
         }
 
         return { ...data, stored: true };
     } catch (err) {
         console.error('Report generation error:', err);
-        return { ...report, report_id: uuidv4(), stored: false };
+        return { error: err.message, details: err };
     }
 }
 

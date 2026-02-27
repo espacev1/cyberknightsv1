@@ -189,8 +189,8 @@ function extractUrls(textContent) {
         totalCount: uniqueUrls.length,
         suspiciousCount: suspicious.length,
         safeCount: uniqueUrls.length - suspicious.length,
-        suspicious,
-        allUrls: uniqueUrls,
+        suspicious: suspicious.slice(0, 100),
+        allUrls: uniqueUrls.slice(0, 100),
         U: suspicious.length
     };
 }
@@ -206,7 +206,7 @@ function detectApis(textContent) {
         }
     }
     return {
-        detected,
+        detected: detected.slice(0, 100),
         totalCount: detected.length,
         A: detected.length
     };
