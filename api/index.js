@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -83,7 +83,7 @@ app.post('/api/scan/save-report', authMiddleware, async (req, res) => {
             extracted_urls: reportData.urlResult?.suspicious,
             suspicious_apis: reportData.apiResult?.detected,
             files_in_apk: reportData.manifest?.allFilesCount || 0,
-            report_id: uuidv4(),
+            report_id: crypto.randomUUID(),
             created_at: new Date().toISOString()
         };
 
