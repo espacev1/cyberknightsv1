@@ -89,7 +89,7 @@ async function extractManifest(apkBuffer) {
             };
         } catch {
             // Binary XML — extract permissions via regex patterns from raw content
-            const permissions = extractPermissionsFromBinary(manifestContent);
+            const permissions = extractPermissionsFromBinary(manifestEntry.getData());
             return {
                 permissions,
                 activities: [],
@@ -97,7 +97,7 @@ async function extractManifest(apkBuffer) {
                 receivers: [],
                 packageName: 'unknown',
                 allFiles,
-                raw: manifestContent
+                raw: null // Don't send binary as string
             };
         }
     } catch (err) {
@@ -115,7 +115,8 @@ async function extractManifest(apkBuffer) {
     }
 }
 
-function extractPermissionsFromBinary(content) {
+function extractPermissionsFromBinary(buffer) {
+    const content = buffer.toString('ascii'); // Better for binary
     const permissions = [];
     const permPattern = /android\.permission\.[A-Z_]+/g;
     const matches = content.match(permPattern);
@@ -132,7 +133,8 @@ function extractTextContent(apkBuffer) {
     try {
         const zip = new AdmZip(apkBuffer);
         const entries = zip.getEntries();
-        let textContent = '';
+        const contentChunks = [];
+        const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file limit
 
         for (const entry of entries) {
             if (entry.isDirectory) continue;
@@ -143,16 +145,21 @@ function extractTextContent(apkBuffer) {
                 name.endsWith('.txt') || name.endsWith('.json') ||
                 name.endsWith('.properties') || name.endsWith('.js') ||
                 name.endsWith('.html')) {
+
                 try {
-                    const data = entry.getData().toString('utf8');
-                    textContent += data + '\n';
+                    const data = entry.getData();
+                    if (data.length > MAX_FILE_SIZE) {
+                        contentChunks.push(data.slice(0, MAX_FILE_SIZE).toString('utf8'));
+                    } else {
+                        contentChunks.push(data.toString('utf8'));
+                    }
                 } catch {
                     // Skip binary content that can't be read as text
                 }
             }
         }
 
-        return textContent;
+        return contentChunks.join('\n');
     } catch (err) {
         console.error('Text extraction error:', err.message);
         return '';

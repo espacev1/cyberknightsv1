@@ -43,7 +43,8 @@ const Upload = () => {
             }, 1500);
         } catch (err) {
             console.error('Upload error:', err);
-            setError(err.response?.data?.error || 'Analysis failed. Please try again.');
+            const msg = err.response?.data?.error || err.message || 'Analysis failed. Please try again.';
+            setError(msg);
             setPhase('idle');
             setUploading(false);
         }
