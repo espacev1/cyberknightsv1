@@ -31,7 +31,7 @@ async function generateReport(userId, fileName, fileSize, analysisResults) {
         activities: manifest.activities,
         services: manifest.services,
         receivers: manifest.receivers,
-        files_in_apk: manifest.allFiles?.length || 0
+        files_in_apk: manifest.allFilesCount || manifest.allFiles?.length || 0
     };
 
     // Store in Supabase

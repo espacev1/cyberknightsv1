@@ -12,6 +12,11 @@ router.post('/save-report', authMiddleware, async (req, res) => {
 
         console.log(`[SCAN] Storing pre-analyzed report for: ${reportData.fileName}`);
 
+        if (!reportData.fileName || !reportData.riskResult) {
+            console.error('[SCAN] Missing required report data');
+            return res.status(400).json({ error: 'Incomplete analysis data received.' });
+        }
+
         // Construct the report object from client data
         const report = await generateReport(req.user.id, reportData.fileName, reportData.fileSize, {
             manifest: reportData.manifest,
@@ -22,10 +27,19 @@ router.post('/save-report', authMiddleware, async (req, res) => {
             riskResult: reportData.riskResult
         });
 
+        if (!report || report.error) {
+            console.error('[SCAN] Database storage failed:', report?.error);
+            return res.status(500).json({ error: 'Database storage failed: ' + (report?.error || 'Unknown error') });
+        }
+
+        console.log(`[SCAN] Report saved successfully. ID: ${report.report_id}`);
         res.json({ success: true, report });
     } catch (err) {
-        console.error('[SCAN] Save Error:', err);
-        res.status(500).json({ error: 'Failed to save report: ' + err.message });
+        console.error('[SCAN] Critical Save Error:', err);
+        res.status(500).json({
+            error: 'Server failed to save report: ' + err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
     }
 });
 

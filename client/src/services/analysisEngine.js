@@ -90,7 +90,7 @@ export async function analyzeAPKLocally(file, onProgress) {
             fileSize: file.size,
             manifest: {
                 permissions,
-                allFiles,
+                allFilesCount: allFiles.length,
                 packageName: 'Extracted Locally (Client Side)',
                 activities: [], // Minimal placeholders to satisfy backend
                 services: [],
