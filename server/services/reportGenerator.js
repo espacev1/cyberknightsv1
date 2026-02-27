@@ -1,4 +1,5 @@
 const supabase = require('../utils/supabase');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * Generate structured report and store in Supabase
@@ -43,14 +44,13 @@ async function generateReport(userId, fileName, fileSize, analysisResults) {
 
         if (error) {
             console.error('Failed to store report in Supabase:', error);
-            // Return report with a generated ID even if storage fails
-            return { ...report, report_id: require('uuid').v4(), stored: false };
+            return { ...report, report_id: uuidv4(), stored: false };
         }
 
         return { ...data, stored: true };
     } catch (err) {
         console.error('Report generation error:', err);
-        return { ...report, report_id: require('uuid').v4(), stored: false };
+        return { ...report, report_id: uuidv4(), stored: false };
     }
 }
 

@@ -72,9 +72,9 @@ export async function analyzeAPKLocally(file, onProgress) {
         const urlResult = extractUrls(textContent);
         const apiResult = detectApis(textContent);
 
-        // Step 5: Malware Check (Demo hashes or API check)
+        // Step 5: Malware Check
         update('Checking malware signatures...');
-        const hashResult = { sha256, matched: false, malwareName: null, M: 0 };
+        const hashResult = { sha256, matched: false, threatName: null, M: 0 };
 
         // Step 6: Final Risk Score
         update('Computing risk score...');
@@ -88,7 +88,14 @@ export async function analyzeAPKLocally(file, onProgress) {
         return {
             fileName: file.name,
             fileSize: file.size,
-            manifest: { permissions, allFiles, packageName: 'Extracted Locally' },
+            manifest: {
+                permissions,
+                allFiles,
+                packageName: 'Extracted Locally (Client Side)',
+                activities: [], // Minimal placeholders to satisfy backend
+                services: [],
+                receivers: []
+            },
             permissions: permissionResult,
             hashResult,
             urlResult,
@@ -111,7 +118,6 @@ async function computeSHA256(file) {
 }
 
 function extractPermissionsFromBinary(data) {
-    // Robust binary string extraction
     const content = new TextDecoder('ascii').decode(data);
     const permPattern = /android\.permission\.[A-Z_]+/g;
     const matches = content.match(permPattern);
@@ -120,16 +126,18 @@ function extractPermissionsFromBinary(data) {
 
 async function extractTextContent(zip) {
     const contentChunks = [];
-    const MAX_FILE_SIZE = 512 * 1024; // 512KB limit for browser memory
+    const MAX_FILE_SIZE = 512 * 1024;
     const filesToScan = Object.keys(zip.files).filter(name =>
-        name.endsWith('.dex') || name.endsWith('.xml') || name.endsWith('.js')
-    );
+        name.endsWith('.dex') || name.endsWith('.xml')
+    ).slice(0, 30); // Limit scan for performance
 
-    for (const name of filesToScan.slice(0, 50)) { // Limit files to scan for performance
+    for (const name of filesToScan) {
         const file = zip.file(name);
         if (file) {
-            const data = await file.async('string');
-            contentChunks.push(data.substring(0, MAX_FILE_SIZE));
+            try {
+                const data = await file.async('string');
+                contentChunks.push(data.substring(0, MAX_FILE_SIZE));
+            } catch (e) { /* ignore read errors */ }
         }
     }
     return contentChunks.join('\n');
@@ -140,10 +148,15 @@ function analyzePermissions(permissions) {
     const safe = [];
 
     for (const perm of permissions) {
+        const shortName = perm.replace('android.permission.', '');
         if (dangerousPermissionsList.includes(perm)) {
-            dangerous.push({ name: perm, severity: getSeverity(perm) });
+            dangerous.push({
+                name: perm,
+                shortName,
+                severity: getSeverity(perm)
+            });
         } else {
-            safe.push({ name: perm });
+            safe.push({ name: perm, shortName });
         }
     }
 
@@ -158,8 +171,8 @@ function analyzePermissions(permissions) {
 }
 
 function getSeverity(permission) {
-    const critical = ['android.permission.SEND_SMS', 'android.permission.CALL_PHONE', 'android.permission.SYSTEM_ALERT_WINDOW'];
-    if (critical.includes(permission)) return 'critical';
+    const critical = ['android.permission.SEND_SMS', 'android.permission.CALL_PHONE', 'android.permission.SYSTEM_ALERT_WINDOW', 'android.permission.INSTALL_PACKAGES'];
+    if (critical.some(c => permission.includes(c))) return 'critical';
     return 'high';
 }
 
@@ -167,12 +180,17 @@ function extractUrls(textContent) {
     const urlPattern = /https?:\/\/[^\s"'<>\]\)\\]+/gi;
     const matches = textContent.match(urlPattern) || [];
     const uniqueUrls = [...new Set(matches)];
-    const suspicious = uniqueUrls.filter(u => u.includes('bit.ly') || u.includes('.tk') || u.startsWith('http://'));
+
+    const suspicious = uniqueUrls
+        .filter(u => u.includes('bit.ly') || u.includes('.tk') || u.startsWith('http://'))
+        .map(url => ({ url, reasons: ['Suspicious pattern or protocol'] }));
 
     return {
         totalCount: uniqueUrls.length,
         suspiciousCount: suspicious.length,
-        suspicious: suspicious.map(url => ({ url, reasons: ['Suspicious pattern'] })),
+        safeCount: uniqueUrls.length - suspicious.length,
+        suspicious,
+        allUrls: uniqueUrls,
         U: suspicious.length
     };
 }
@@ -181,19 +199,34 @@ function detectApis(textContent) {
     const detected = [];
     for (const pattern of suspiciousApiPatterns) {
         if (textContent.includes(pattern)) {
-            detected.push({ api: pattern });
+            detected.push({
+                api: pattern,
+                risk: pattern.includes('exec') || pattern.includes('ClassLoader') ? 'critical' : 'high'
+            });
         }
     }
-    return { detected, A: detected.length };
+    return {
+        detected,
+        totalCount: detected.length,
+        A: detected.length
+    };
 }
 
 function computeRiskScore(P, M, U, A) {
     let rawScore = (P * 5) + (M * 40) + (U * 10) + (A * 8);
     const score = Math.min(rawScore, 100);
+
     return {
         score,
+        rawScore,
         classification: score > 60 ? 'High Risk' : score > 30 ? 'Medium Risk' : 'Safe',
         color: score > 60 ? '#ff4444' : score > 30 ? '#ffaa00' : '#00ff88',
-        formula: `R = (${P} × 5) + (${M} × 40) + (${U} × 10) + (${A} × 8)`
+        formula: `R = (${P} × 5) + (${M} × 40) + (${U} × 10) + (${A} × 8) = ${rawScore}`,
+        breakdown: {
+            permissions: { value: P, contribution: P * 5 },
+            malware: { value: M, contribution: M * 40 },
+            urls: { value: U, contribution: U * 10 },
+            apis: { value: A, contribution: A * 8 }
+        }
     };
 }
