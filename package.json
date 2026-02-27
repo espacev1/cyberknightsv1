@@ -1,0 +1,18 @@
+{
+    "name": "cyber-knights",
+    "version": "1.0.0",
+    "description": "Cyber Knights - Next-Gen APK Upload and Threat Analysis Platform",
+    "scripts": {
+        "dev:client": "cd client && npm run dev",
+        "dev:server": "cd server && node server.js",
+        "install:all": "cd client && npm install && cd ../server && npm install",
+        "build": "cd client && npm run build"
+    },
+    "keywords": [
+        "apk",
+        "malware",
+        "cybersecurity",
+        "threat-analysis"
+    ],
+    "license": "ISC"
+}

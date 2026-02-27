@@ -1,0 +1,8 @@
+.history-table-wrapper {
+    overflow-x: auto;
+}
+
+.score-display {
+    font-weight: 700;
+    font-size: 14px;
+}

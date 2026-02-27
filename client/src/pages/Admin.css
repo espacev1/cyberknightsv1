@@ -1,0 +1,96 @@
+.admin-stats {
+    margin-bottom: 24px;
+}
+
+.admin-content {
+    margin-bottom: 24px;
+}
+
+.admin-recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: var(--radius-sm);
+}
+
+.admin-scan-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.admin-scan-date {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Signatures */
+.signatures-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.add-signature-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.signatures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.signature-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: var(--radius-sm);
+}
+
+.sig-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sig-threat {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-red);
+}
+
+.sig-hash {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.sig-delete {
+    padding: 6px !important;
+    color: var(--text-muted) !important;
+    flex-shrink: 0;
+}
+
+.sig-delete:hover {
+    color: var(--accent-red) !important;
+}

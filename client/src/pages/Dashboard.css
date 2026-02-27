@@ -1,0 +1,118 @@
+.dashboard-stats {
+    margin-bottom: 24px;
+}
+
+.dashboard-content {
+    margin-bottom: 24px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-action-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+}
+
+.quick-action-card:hover {
+    border-color: var(--border-glow);
+    transform: translateX(4px);
+}
+
+.qa-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.qa-text {
+    flex: 1;
+}
+
+.qa-text h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.qa-text p {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 12px;
+    text-align: center;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: rgba(30, 41, 59, 0.3);
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+}
+
+.recent-item:hover {
+    background: rgba(6, 214, 160, 0.05);
+}
+
+.recent-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recent-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.recent-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
