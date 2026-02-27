@@ -49,8 +49,16 @@ const Upload = () => {
             }, 1000);
         } catch (err) {
             console.error('[SCAN] Analysis failure:', err);
-            const backendError = err.response?.data?.error || err.response?.data?.details || err.message;
-            setError(`Analysis failure: ${backendError}`);
+            let msg = 'Unknown failure';
+
+            if (err.response?.data) {
+                const data = err.response.data;
+                msg = typeof data === 'string' ? data : (data.error || data.details || data.message || JSON.stringify(data));
+            } else {
+                msg = err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+            }
+
+            setError(`Analysis failure: ${msg}`);
             setPhase('idle');
             setUploading(false);
         }
