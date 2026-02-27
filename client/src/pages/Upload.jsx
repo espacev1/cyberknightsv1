@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileUploader from '../components/FileUploader';
-import { uploadAPKToStorage, analyzeAPKStorage } from '../services/api';
+import { saveAnalyzedReport } from '../services/api';
+import { analyzeAPKLocally } from '../services/analysisEngine';
 import { Shield, Loader, CheckCircle, FileSearch } from 'lucide-react';
 import './Upload.css';
 
@@ -10,7 +11,7 @@ const Upload = () => {
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [phase, setPhase] = useState('idle'); // idle, uploading, analyzing, complete
+    const [phase, setPhase] = useState('idle'); // idle, analyzing, complete
     const [error, setError] = useState('');
 
     const handleFileSelect = (selectedFile) => {
@@ -22,37 +23,33 @@ const Upload = () => {
         if (!file) return;
 
         setUploading(true);
-        setPhase('uploading');
+        setPhase('analyzing');
         setError('');
         setProgress(0);
 
         try {
-            // Step 1: Upload to Supabase Storage
-            console.log('[DEBUG] Starting Supabase Storage upload for:', file.name);
-            const uploadResult = await uploadAPKToStorage(file, (percent) => {
-                console.log(`[DEBUG] Upload progress: ${percent}%`);
+            // Step 1: Analyze locally
+            console.log('[DEBUG] Starting local analysis for:', file.name);
+            const reportData = await analyzeAPKLocally(file, (percent, msg) => {
                 setProgress(percent);
+                console.log(`[DEBUG] ${msg} (${percent}%)`);
             });
-            console.log('[DEBUG] Storage upload successful:', uploadResult);
-            setProgress(100);
+            console.log('[DEBUG] Local analysis complete:', reportData);
 
-            // Step 2: Trigger backend analysis
-            setPhase('analyzing');
-            console.log('[DEBUG] Triggering backend analysis...');
-            const result = await analyzeAPKStorage(uploadResult);
-            console.log('[DEBUG] Analysis result:', result);
-
+            // Step 2: Save report to server
             setPhase('complete');
+            console.log('[DEBUG] Saving report to server...');
+            const result = await saveAnalyzedReport(reportData);
+            console.log('[DEBUG] Report saved:', result);
 
             setTimeout(() => {
                 if (result.report?.report_id) {
                     navigate(`/report/${result.report.report_id}`);
                 }
-            }, 1500);
+            }, 1000);
         } catch (err) {
-            console.error('[SCAN] Detailed Error:', err);
-            const msg = err.message || 'Analysis failed. Please check your Supabase Storage permissions.';
-            setError(`Error: ${msg}`);
+            console.error('[SCAN] Analysis failure:', err);
+            setError(`Analysis failure: ${err.message}`);
             setPhase('idle');
             setUploading(false);
         }
@@ -94,7 +91,7 @@ const Upload = () => {
                     </>
                 )}
 
-                {(phase === 'uploading' || phase === 'analyzing' || phase === 'complete') && (
+                {(phase === 'analyzing' || phase === 'complete') && (
                     <div className="scan-progress">
                         <div className="progress-visual">
                             {phase === 'complete' ? (
@@ -105,47 +102,35 @@ const Upload = () => {
                         </div>
 
                         <h3 className="progress-title">
-                            {phase === 'uploading' && 'Uploading APK...'}
-                            {phase === 'analyzing' && 'Analyzing Threats...'}
+                            {phase === 'analyzing' && 'Analyzing Threats Locally...'}
                             {phase === 'complete' && 'Analysis Complete!'}
                         </h3>
 
                         <p className="progress-subtitle">
-                            {phase === 'uploading' && `${progress}% uploaded — ${file?.name}`}
-                            {phase === 'analyzing' && 'Running permission analysis, malware scan, URL extraction...'}
-                            {phase === 'complete' && 'Redirecting to report...'}
+                            {phase === 'analyzing' && `${progress}% — This happens directly on your computer.`}
+                            {phase === 'complete' && 'Finalizing report and redirecting...'}
                         </p>
 
-                        {phase !== 'complete' && (
-                            <div className="progress-bar-wrapper">
-                                <div
-                                    className="progress-bar"
-                                    style={{ width: phase === 'analyzing' ? '90%' : `${progress}%` }}
-                                ></div>
-                            </div>
-                        )}
+                        <div className="progress-bar-wrapper">
+                            <div
+                                className="progress-bar"
+                                style={{ width: phase === 'complete' ? '100%' : `${progress}%` }}
+                            ></div>
+                        </div>
 
                         {phase === 'analyzing' && (
                             <div className="analysis-steps">
+                                <div className="step active">
+                                    <div className="step-dot"></div>
+                                    <span>Hashing and Verifying</span>
+                                </div>
                                 <div className="step active">
                                     <div className="step-dot"></div>
                                     <span>Extracting Manifest</span>
                                 </div>
                                 <div className="step active">
                                     <div className="step-dot"></div>
-                                    <span>Analyzing Permissions</span>
-                                </div>
-                                <div className="step active">
-                                    <div className="step-dot"></div>
-                                    <span>Scanning Malware Signatures</span>
-                                </div>
-                                <div className="step">
-                                    <div className="step-dot"></div>
-                                    <span>Extracting URLs</span>
-                                </div>
-                                <div className="step">
-                                    <div className="step-dot"></div>
-                                    <span>Computing Risk Score</span>
+                                    <span>Scanning Code & Permissions</span>
                                 </div>
                             </div>
                         )}

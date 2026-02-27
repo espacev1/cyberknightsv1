@@ -39,9 +39,14 @@ export const uploadAPKToStorage = async (file, onProgress) => {
     return { filePath: data.path, fileName: file.name, fileSize: file.size };
 };
 
-export const analyzeAPKStorage = async (fileData) => {
-    const response = await api.post('/scan/analyze-storage', fileData);
+export const saveAnalyzedReport = async (reportData) => {
+    const response = await api.post('/scan/save-report', reportData);
     return response.data;
+};
+
+// No longer needed for storage flow, but kept for interface consistency
+export const analyzeAPKStorage = async (fileData) => {
+    return { success: true };
 };
 
 // Keep legacy for small files or local dev if needed
