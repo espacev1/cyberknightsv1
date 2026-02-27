@@ -26,7 +26,13 @@ export const uploadAPKToStorage = async (file, onProgress) => {
         .from('apks')
         .upload(filePath, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            onUploadProgress: (progress) => {
+                if (onProgress) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    onProgress(percent);
+                }
+            }
         });
 
     if (error) throw error;

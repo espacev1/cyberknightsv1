@@ -28,14 +28,19 @@ const Upload = () => {
 
         try {
             // Step 1: Upload to Supabase Storage
-            console.log('Uploading to storage...');
-            const uploadResult = await uploadAPKToStorage(file);
+            console.log('[DEBUG] Starting Supabase Storage upload for:', file.name);
+            const uploadResult = await uploadAPKToStorage(file, (percent) => {
+                console.log(`[DEBUG] Upload progress: ${percent}%`);
+                setProgress(percent);
+            });
+            console.log('[DEBUG] Storage upload successful:', uploadResult);
             setProgress(100);
 
             // Step 2: Trigger backend analysis
             setPhase('analyzing');
-            console.log('Triggering analysis...');
+            console.log('[DEBUG] Triggering backend analysis...');
             const result = await analyzeAPKStorage(uploadResult);
+            console.log('[DEBUG] Analysis result:', result);
 
             setPhase('complete');
 
@@ -45,9 +50,9 @@ const Upload = () => {
                 }
             }, 1500);
         } catch (err) {
-            console.error('Analysis error:', err);
-            const msg = err.response?.data?.error || err.message || 'Analysis failed. Please try again.';
-            setError(msg);
+            console.error('[SCAN] Detailed Error:', err);
+            const msg = err.message || 'Analysis failed. Please check your Supabase Storage permissions.';
+            setError(`Error: ${msg}`);
             setPhase('idle');
             setUploading(false);
         }
