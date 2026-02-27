@@ -29,7 +29,11 @@ router.post('/save-report', authMiddleware, async (req, res) => {
 
         if (!report || report.error) {
             console.error('[SCAN] Database storage failed:', report?.error);
-            return res.status(500).json({ error: 'Database storage failed: ' + (report?.error || 'Unknown error') });
+            return res.status(500).json({
+                error: 'Database storage failed',
+                details: report?.error || 'Unknown error',
+                supabase_raw: report?.details
+            });
         }
 
         console.log(`[SCAN] Report saved successfully. ID: ${report.report_id}`);
@@ -37,8 +41,8 @@ router.post('/save-report', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('[SCAN] Critical Save Error:', err);
         res.status(500).json({
-            error: 'Server failed to save report: ' + err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+            error: 'Server failed to save report.',
+            details: err.message
         });
     }
 });
