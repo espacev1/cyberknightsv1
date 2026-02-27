@@ -2,8 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const setupStorage = require('./utils/storageSetup');
 
 const app = express();
+setupStorage(); // Auto-create bucket if missing
 const PORT = process.env.PORT || 5000;
 
 // Middleware
