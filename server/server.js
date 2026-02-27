@@ -46,3 +46,5 @@ app.listen(PORT, () => {
     console.log(`📡  API endpoint: http://localhost:${PORT}/api`);
     console.log(`🔍  Health check: http://localhost:${PORT}/api/health\n`);
 });
+
+module.exports = app;

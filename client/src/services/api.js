@@ -17,6 +17,28 @@ api.interceptors.request.use(async (config) => {
 });
 
 // API Methods
+export const uploadAPKToStorage = async (file, onProgress) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+        .from('apks')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (error) throw error;
+    return { filePath: data.path, fileName: file.name, fileSize: file.size };
+};
+
+export const analyzeAPKStorage = async (fileData) => {
+    const response = await api.post('/scan/analyze-storage', fileData);
+    return response.data;
+};
+
+// Keep legacy for small files or local dev if needed
 export const uploadAPK = async (file, onProgress) => {
     const formData = new FormData();
     formData.append('apk', file);

@@ -26,26 +26,21 @@ router.post('/upload', authMiddleware, upload.single('apk'), async (req, res) =>
 
         // Step 1: Extract manifest
         const manifest = await extractManifest(apkBuffer);
-        console.log(`[SCAN] Manifest extracted. Permissions: ${manifest.permissions.length}`);
 
         // Step 2: Analyze permissions
         const permissions = analyzePermissions(manifest.permissions);
-        console.log(`[SCAN] Dangerous permissions: ${permissions.dangerousCount}`);
 
         // Step 3: Compute hash and check malware signatures
         const hashResult = await scanHash(apkBuffer);
-        console.log(`[SCAN] Hash: ${hashResult.sha256.substring(0, 16)}... Match: ${hashResult.matched}`);
 
         // Step 4: Extract text content for URL/API scanning
         const textContent = extractTextContent(apkBuffer);
 
         // Step 5: Extract and analyze URLs
         const urlResult = extractUrls(textContent);
-        console.log(`[SCAN] URLs found: ${urlResult.totalCount}, Suspicious: ${urlResult.suspiciousCount}`);
 
         // Step 6: Detect suspicious APIs
         const apiResult = detectApis(textContent);
-        console.log(`[SCAN] Suspicious APIs: ${apiResult.totalCount}`);
 
         // Step 7: Compute risk score
         const riskResult = computeRiskScore(
@@ -54,7 +49,6 @@ router.post('/upload', authMiddleware, upload.single('apk'), async (req, res) =>
             urlResult.U,
             apiResult.A
         );
-        console.log(`[SCAN] Risk Score: ${riskResult.score} (${riskResult.classification})`);
 
         // Step 8: Generate and store report
         const report = await generateReport(req.user.id, fileName, fileSize, {
@@ -68,10 +62,7 @@ router.post('/upload', authMiddleware, upload.single('apk'), async (req, res) =>
 
         console.log(`[SCAN] Analysis complete. Report ID: ${report.report_id}`);
 
-        res.json({
-            success: true,
-            report
-        });
+        res.json({ success: true, report });
     } catch (err) {
         console.error('[SCAN] Error:', err);
 
@@ -79,6 +70,81 @@ router.post('/upload', authMiddleware, upload.single('apk'), async (req, res) =>
             return res.status(400).json({ error: err.message });
         }
 
+        res.status(500).json({ error: 'Analysis failed: ' + err.message });
+    }
+});
+
+// POST /api/scan/analyze-storage — analyze APK already uploaded to Supabase Storage
+router.post('/analyze-storage', authMiddleware, async (req, res) => {
+    try {
+        const { filePath, fileName, fileSize } = req.body;
+
+        if (!filePath) {
+            return res.status(400).json({ error: 'No file path provided' });
+        }
+
+        console.log(`[SCAN] Starting analysis from storage: ${filePath} (${fileName})`);
+
+        // Download from Supabase Storage
+        const { data, error } = await supabase.storage.from('apks').download(filePath);
+
+        if (error || !data) {
+            console.error('[SCAN] Storage download error:', error);
+            return res.status(500).json({ error: 'Failed to download APK from storage: ' + (error?.message || 'Unknown error') });
+        }
+
+        const apkBuffer = Buffer.from(await data.arrayBuffer());
+
+        console.log(`[SCAN] APK downloaded. Starting analysis...`);
+
+        // Step 1: Extract manifest
+        const manifest = await extractManifest(apkBuffer);
+
+        // Step 2: Analyze permissions
+        const permissions = analyzePermissions(manifest.permissions);
+
+        // Step 3: Compute hash and check malware signatures
+        const hashResult = await scanHash(apkBuffer);
+
+        // Step 4: Extract text content for URL/API scanning
+        const textContent = extractTextContent(apkBuffer);
+
+        // Step 5: Extract and analyze URLs
+        const urlResult = extractUrls(textContent);
+
+        // Step 6: Detect suspicious APIs
+        const apiResult = detectApis(textContent);
+
+        // Step 7: Compute risk score
+        const riskResult = computeRiskScore(
+            permissions.P,
+            hashResult.M,
+            urlResult.U,
+            apiResult.A
+        );
+
+        // Step 8: Generate and store report
+        const report = await generateReport(req.user.id, fileName || filePath, fileSize || apkBuffer.length, {
+            manifest,
+            permissions,
+            hashResult,
+            urlResult,
+            apiResult,
+            riskResult
+        });
+
+        console.log(`[SCAN] Analysis complete. Report ID: ${report.report_id}`);
+
+        // Cleanup: Option to delete from storage after analysis if desired
+        // await supabase.storage.from('apks').remove([filePath]);
+
+        res.json({
+            success: true,
+            report
+        });
+
+    } catch (err) {
+        console.error('[SCAN] Analysis Error:', err);
         res.status(500).json({ error: 'Analysis failed: ' + err.message });
     }
 });

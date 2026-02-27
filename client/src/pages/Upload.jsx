@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileUploader from '../components/FileUploader';
-import { uploadAPK } from '../services/api';
+import { uploadAPKToStorage, analyzeAPKStorage } from '../services/api';
 import { Shield, Loader, CheckCircle, FileSearch } from 'lucide-react';
 import './Upload.css';
 
@@ -24,15 +24,18 @@ const Upload = () => {
         setUploading(true);
         setPhase('uploading');
         setError('');
+        setProgress(0);
 
         try {
-            setPhase('uploading');
-            const result = await uploadAPK(file, (percent) => {
-                setProgress(percent);
-                if (percent >= 100) {
-                    setPhase('analyzing');
-                }
-            });
+            // Step 1: Upload to Supabase Storage
+            console.log('Uploading to storage...');
+            const uploadResult = await uploadAPKToStorage(file);
+            setProgress(100);
+
+            // Step 2: Trigger backend analysis
+            setPhase('analyzing');
+            console.log('Triggering analysis...');
+            const result = await analyzeAPKStorage(uploadResult);
 
             setPhase('complete');
 
@@ -42,7 +45,7 @@ const Upload = () => {
                 }
             }, 1500);
         } catch (err) {
-            console.error('Upload error:', err);
+            console.error('Analysis error:', err);
             const msg = err.response?.data?.error || err.message || 'Analysis failed. Please try again.';
             setError(msg);
             setPhase('idle');
