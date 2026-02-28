@@ -39,8 +39,28 @@ export const uploadAPKToStorage = async (file, onProgress) => {
     return { filePath: data.path, fileName: file.name, fileSize: file.size };
 };
 
+// Helper to remove null bytes and other illegal PostgreSQL characters
+const sanitizeData = (obj) => {
+    if (typeof obj === 'string') {
+        // Remove null bytes (\u0000) which PostgreSQL JSONB/Text doesn't support
+        return obj.replace(/\0/g, '');
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(sanitizeData);
+    }
+    if (typeof obj === 'object' && obj !== null) {
+        const sanitized = {};
+        for (const [key, value] of Object.entries(obj)) {
+            sanitized[key] = sanitizeData(value);
+        }
+        return sanitized;
+    }
+    return obj;
+};
+
 export const saveAnalyzedReport = async (reportData) => {
-    const response = await api.post('/scan/save-report', reportData);
+    const sanitizedReport = sanitizeData(reportData);
+    const response = await api.post('/scan/save-report', sanitizedReport);
     return response.data;
 };
 
