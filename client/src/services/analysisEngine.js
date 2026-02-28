@@ -126,17 +126,31 @@ function extractPermissionsFromBinary(data) {
 
 async function extractTextContent(zip) {
     const contentChunks = [];
-    const MAX_FILE_SIZE = 512 * 1024;
-    const filesToScan = Object.keys(zip.files).filter(name =>
-        name.endsWith('.dex') || name.endsWith('.xml')
-    ).slice(0, 30); // Limit scan for performance
+    const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file
+    const allFiles = Object.keys(zip.files);
+
+    // 1. Prioritize critical files (Manifest and DEX code)
+    const priorityFiles = allFiles.filter(name =>
+        name === 'AndroidManifest.xml' ||
+        (name.startsWith('classes') && name.endsWith('.dex'))
+    ).sort();
+
+    // 2. Sample other XML files for potential URL configurations
+    const otherFiles = allFiles.filter(name =>
+        name.endsWith('.xml') && !priorityFiles.includes(name)
+    ).slice(0, 50);
+
+    const filesToScan = [...priorityFiles, ...otherFiles];
+    const decoder = new TextDecoder('ascii', { fatal: false });
 
     for (const name of filesToScan) {
         const file = zip.file(name);
         if (file) {
             try {
-                const data = await file.async('string');
-                contentChunks.push(data.substring(0, MAX_FILE_SIZE));
+                // Use uint8array for binary files to avoid JS string corruption
+                const buffer = await file.async('uint8array');
+                const decoded = decoder.decode(buffer.slice(0, MAX_FILE_SIZE));
+                contentChunks.push(decoded);
             } catch (e) { /* ignore read errors */ }
         }
     }
