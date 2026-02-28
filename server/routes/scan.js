@@ -41,7 +41,7 @@ router.post('/save-report', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('[SCAN] Critical Save Error:', err);
         res.status(500).json({
-            error: 'Server failed to save report.',
+            error: `Server failed to save report: ${err.message || err.details || 'Unknown error'}`,
             details: err.message
         });
     }

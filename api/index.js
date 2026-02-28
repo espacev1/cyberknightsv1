@@ -112,7 +112,7 @@ app.post('/api/scan/save-report', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Store failure detail:', err);
         res.status(500).json({
-            error: 'Store failed',
+            error: `Store failed: ${err.message || err.details || 'Unknown error'}`,
             details: err.message,
             supabase_error: err.code || err.details
         });
